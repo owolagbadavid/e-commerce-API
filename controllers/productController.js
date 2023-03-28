@@ -2,6 +2,9 @@ const CustomError = require('../errors');
 const Product = require('../models/Product');
 const { StatusCodes } = require('http-status-codes');
 const path = require('path');
+const { rmvTempImgs } = require('../utils/rmvUnusedImg');
+const cloudinary = require('cloudinary').v2;
+
 
 const createProduct = async (req, res)=>{
     req.body.user = req.user.userId;
@@ -56,6 +59,7 @@ const deleteProduct = async (req, res)=>{
 }
 
 const uploadImage = async (req, res)=>{
+
     if(!req.files){
         throw new CustomError.BadRequestError("Please provide file")
     }
@@ -67,9 +71,14 @@ const uploadImage = async (req, res)=>{
     if(productImage.size>maxSize){
         throw new CustomError.BadRequestError("Please upload image smaller than 1MB")
     }
-    const imagePath = path.join(__dirname, '../public/uploads/' + `${productImage.name}`);
-    await productImage.mv(imagePath);
-    res.status(StatusCodes.OK).send({image:`/uploads/${productImage.name}`})
+
+    const result = await cloudinary.uploader.upload(req.files.image.tempFilePath, {
+        use_filename:true, folder:'cermuel-ecommerce-api',
+    })
+
+    await rmvTempImgs(req, res)
+    return res.status(StatusCodes.OK).json({image:result.secure_url})
+      
 }
 
 module.exports = {
