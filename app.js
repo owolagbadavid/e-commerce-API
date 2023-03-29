@@ -76,6 +76,7 @@ const port = process.env.PORT || 5000;
 const start = async (req, res) => {
   try {
     await connectDB(process.env.MONGO_URI);
+    res.header("Access-Control-Allow-Origin", "http://localhost:3001");
     app.listen(port, console.log(`Server is listening on port ${port}...`));
   } catch (error) {
     console.log(error);
